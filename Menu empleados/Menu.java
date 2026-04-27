@@ -13,7 +13,8 @@ public class Menu{
           switch (menu){
            
            case 1:
-           
+                  RegistroEmpleados captura = new RegistroEmpleados("Empleados.txt");
+                  captura.Captura();
                   break;
            case 2:
            
