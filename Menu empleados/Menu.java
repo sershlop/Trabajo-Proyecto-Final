@@ -17,17 +17,21 @@ public class Menu{
                   captura.Captura();
                   break;
            case 2:
-           
+                 RegistroEmpleados modificar = new RegistroEmpleados("Empleados.txt");
+                  modificar.modificarEmpleado();
                   break;
            case 3:
+            borrar borrarEmp = new borrar("Empleados.txt");
                do{
                borrar = Integer.parseInt(JOptionPane.showInputDialog(" *** Menu *** \n" + "1 Borrado fisico \n" + "2 Borrado Logico \n" + "3 Volver \n" + "Selecione una opcion [1~3]"));
                switch (borrar) {
                   case 1:
                   
+                  
+                  borrarEmp.borrarFisico();
                      break;
                   case 2:
-                  
+                       borrarEmp.borrarLogico();
                      break;
                   case 3:
                         borrar = 3;
