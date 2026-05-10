@@ -45,14 +45,17 @@ public class Menu{
                   
            case 4:
               do{
+              ReporteEmpleados reportes = new ReporteEmpleados("empleados.txt");
                Imprimir = Integer.parseInt(JOptionPane.showInputDialog(" *** Menu *** \n" + "1 Todo \n" + "2 Solo los activos \n" + "3 Volver \n" + "Selecione una opcion [1~3]"));
                switch (Imprimir) {
                   case 1:
-                  
-                     break;
+                    reportes.imprimirTodo();
+                      break;
+
                   case 2:
-                  
-                     break;
+                     reportes.imprimirActivos();
+                       break;
+                    
                   case 3:
                         Imprimir = 3;
                         break;
