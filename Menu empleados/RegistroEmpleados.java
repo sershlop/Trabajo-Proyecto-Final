@@ -1,129 +1,151 @@
+
+// RegistroEmpleados.java — Captura y modificación de empleados
+
+// Este módulo se encarga de DOS cosas principales:
+//   1. Capturar nuevos empleados y guardarlos en los arreglos
+//   2. Modificar los datos de un empleado que ya existe
+// arreglos de la clase Arreglos mientras el programa esté abierto.
+
 import javax.swing.JOptionPane;
-import java.io.*;
 
 public class RegistroEmpleados {
-    private String nombreArchivo;
 
-
-    public RegistroEmpleados(String nombreArchivo) {
-        this.nombreArchivo = nombreArchivo;
-    }
-
-
+    // --------------------------------------------------------
+    // Captura()
+    // --------------------------------------------------------
+    // Le pregunta al usuario los datos de un nuevo empleado
+    // y los guarda en los arreglos compartidos (Arreglos.java).
+    // Repite el proceso hasta que el usuario diga "No".
     public void Captura() {
         int continuar;
 
         do {
+            // Primero pedimos el ID y verificamos que no esté repetido
             String idEmpleado = solicitarIdUnico();
-            if (idEmpleado == null) break;
+            if (idEmpleado == null) break; // Si el usuario canceló, salimos
 
+            // Pedimos el puesto del empleado
             String puesto = JOptionPane.showInputDialog("Ingrese el Puesto:");
-            
-            int respuestaStatus = JOptionPane.showConfirmDialog(null, 
-                "¿El empleado está Activo?", "Status", JOptionPane.YES_NO_OPTION);
+
+            // Preguntamos si el empleado está activo con un botón Sí/No
+            int respuestaStatus = JOptionPane.showConfirmDialog(null,
+                    "¿El empleado está Activo?", "Status", JOptionPane.YES_NO_OPTION);
             boolean status = (respuestaStatus == JOptionPane.YES_OPTION);
 
-            String[] datos = {idEmpleado, puesto, String.valueOf(status)};
-            
-            guardarEnArchivo(datos);
+            // Guardamos los datos en la posición actual del arreglo
+            // y aumentamos el contador de empleados
+            guardarEnArreglo(idEmpleado, puesto, status);
 
-            continuar = JOptionPane.showConfirmDialog(null, 
-                "¿Quieres seguir Capturando?", "Confirmación", JOptionPane.YES_NO_OPTION);
+            // Preguntamos si quieren capturar otro empleado
+            continuar = JOptionPane.showConfirmDialog(null,
+                    "¿Quieres seguir Capturando?", "Confirmación", JOptionPane.YES_NO_OPTION);
 
         } while (continuar == JOptionPane.YES_OPTION);
     }
 
+    // --------------------------------------------------------
+    // solicitarIdUnico()
+    // --------------------------------------------------------
+    // Pide un ID al usuario y se queda preguntando en bucle
+    // hasta que el ID introducido NO exista en los arreglos.
+    // Así evitamos duplicados sin necesidad de leer ningún archivo.
     private String solicitarIdUnico() {
         while (true) {
             String id = JOptionPane.showInputDialog("Ingrese el ID del Empleado:");
-            if (id == null) return null;
+            if (id == null) return null; // El usuario presionó Cancelar
 
             if (existeId(id)) {
-                JOptionPane.showMessageDialog(null, "El ID '" + id + "' ya existe.", "Error", JOptionPane.ERROR_MESSAGE);
+                // Si el ID ya está registrado, avisamos y volvemos a preguntar
+                JOptionPane.showMessageDialog(null,
+                        "El ID '" + id + "' ya existe.", "Error", JOptionPane.ERROR_MESSAGE);
             } else {
-                return id;
+                return id; // ID válido y único, lo devolvemos
             }
         }
     }
 
+    // --------------------------------------------------------
+    // existeId()
+    // --------------------------------------------------------
+    // Recorre el arreglo de IDs buscando si ya hay uno igual.
+    // Antes esto requería abrir y leer un archivo línea por línea.
+    // Ahora es mucho más directo: simplemente comparamos strings
+    // en memoria con .equals().
     public boolean existeId(String idBuscado) {
-        File archivo = new File(this.nombreArchivo);
-        if (!archivo.exists()) return false;
-
-        try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
-            String linea;
-            while ((linea = br.readLine()) != null) {
-                if (linea.contains("ID: " + idBuscado + " |")) return true;
+        for (int i = 0; i < Arreglos.total; i++) {
+            if (Arreglos.ids[i].equals(idBuscado)) {
+                return true; // Lo encontramos, ya existe
             }
-        } catch (IOException e) {
-            System.err.println("Error de lectura: " + e.getMessage());
         }
-        return false;
+        return false; // No está en ninguna posición del arreglo
     }
-    
+
+    // --------------------------------------------------------
+    // modificarEmpleado()
+    // --------------------------------------------------------
+    // Busca un empleado por su ID y permite cambiar su puesto
+    // y su status (activo/inactivo).
+    // Antes había que crear un archivo temporal y reemplazarlo.
+    // Con arreglos, simplemente sobreescribimos la posición encontrada.
     public void modificarEmpleado() {
-    String idBuscar = JOptionPane.showInputDialog("Ingrese el ID del empleado a modificar:");
-    if (idBuscar == null) return;
+        String idBuscar = JOptionPane.showInputDialog("Ingrese el ID del empleado a modificar:");
+        if (idBuscar == null) return;
 
-    File archivo = new File(this.nombreArchivo);
-    File temp = new File("temp.txt");
+        // Buscamos en el arreglo el índice donde está ese ID
+        int indice = buscarIndice(idBuscar);
 
-    boolean encontrado = false;
+        if (indice == -1) {
+            // Si devuelve -1, el empleado no existe
+            JOptionPane.showMessageDialog(null, "ID no encontrado.");
+            return;
+        }
 
-    try (BufferedReader br = new BufferedReader(new FileReader(archivo));
-         PrintWriter pw = new PrintWriter(new FileWriter(temp))) {
+        // Pedimos los nuevos datos
+        String nuevoPuesto = JOptionPane.showInputDialog("Nuevo puesto:");
+        int resp = JOptionPane.showConfirmDialog(null,
+                "¿El empleado está activo?", "Status", JOptionPane.YES_NO_OPTION);
+        boolean nuevoStatus = (resp == JOptionPane.YES_OPTION);
 
-        String linea;
+        // Sobreescribimos directamente en la misma posición del arreglo
+        Arreglos.puestos[indice] = nuevoPuesto;
+        Arreglos.activos[indice] = nuevoStatus;
 
-        while ((linea = br.readLine()) != null) {
+        JOptionPane.showMessageDialog(null, "Empleado modificado correctamente.");
+    }
 
-            if (linea.contains("ID: " + idBuscar + " |")) {
-                encontrado = true;
+    // --------------------------------------------------------
+    // guardarEnArreglo()
+    // --------------------------------------------------------
+    // Guarda un nuevo empleado al final del arreglo.
+    // Verifica primero que no hayamos llegado al límite máximo.
+    private void guardarEnArreglo(String id, String puesto, boolean status) {
+        if (Arreglos.total >= Arreglos.MAX) {
+            JOptionPane.showMessageDialog(null, "No hay espacio para más empleados.");
+            return;
+        }
 
-                // Pedir nuevos datos
-                String nuevoPuesto = JOptionPane.showInputDialog("Nuevo puesto:");
+        // Guardamos cada dato en su arreglo correspondiente, en la misma posición
+        Arreglos.ids[Arreglos.total]     = id;
+        Arreglos.puestos[Arreglos.total] = puesto;
+        Arreglos.activos[Arreglos.total] = status;
 
-                int resp = JOptionPane.showConfirmDialog(null,
-                        "¿El empleado está activo?", "Status",
-                        JOptionPane.YES_NO_OPTION);
+        // Avanzamos el contador para la siguiente captura
+        Arreglos.total++;
+    }
 
-                boolean nuevoStatus = (resp == JOptionPane.YES_OPTION);
-
-                // Escribir línea modificada
-                pw.println("ID: " + idBuscar + " | Puesto: " + nuevoPuesto + " | Activo: " + nuevoStatus);
-
-            } else {
-                pw.println(linea); // copiar igual
+    // --------------------------------------------------------
+    // buscarIndice()
+    // --------------------------------------------------------
+    // Recorre el arreglo y devuelve la posición (índice) donde
+    // está el ID buscado. Si no lo encuentra, devuelve -1.
+    // Este valor de -1 es una convención clásica en programación
+    // para indicar "no encontrado".
+    public int buscarIndice(String idBuscado) {
+        for (int i = 0; i < Arreglos.total; i++) {
+            if (Arreglos.ids[i].equals(idBuscado)) {
+                return i; // Devolvemos la posición exacta
             }
         }
-
-    } catch (IOException e) {
-        JOptionPane.showMessageDialog(null, "Error: " + e.getMessage());
-        return;
-    }
-
-    // Reemplazar archivo original
-    if (archivo.delete()) {
-        temp.renameTo(archivo);
-    }
-
-    if (encontrado) {
-        JOptionPane.showMessageDialog(null, "Empleado modificado correctamente.");
-    } else {
-        JOptionPane.showMessageDialog(null, "ID no encontrado.");
-        temp.delete();
-    }
-}
-
-    private void guardarEnArchivo(String[] datos) {
-        try (FileWriter fw = new FileWriter(this.nombreArchivo, true);
-             BufferedWriter bw = new BufferedWriter(fw);
-             PrintWriter out = new PrintWriter(bw)) {
-            
-            out.println("ID: " + datos[0] + " | Puesto: " + datos[1] + " | Activo: " + datos[2]);
-            
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error al guardar: " + e.getMessage());
-        }
+        return -1; // No existe
     }
 }

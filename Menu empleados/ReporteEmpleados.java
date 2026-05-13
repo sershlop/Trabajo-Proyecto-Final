@@ -1,73 +1,91 @@
+
+// Este módulo se hereda de RegistroEmpleados (extends).
+// Eso significa que tiene acceso a todos sus métodos, como
+// buscarIndice() o existeId(), sin tener que volver a escribirlos.
+//
+// Su función es recorrer los arreglos y mostrar la información
+// en pantalla, con o sin filtro de empleados activos.
+
 import javax.swing.JOptionPane;
 import javax.swing.JTextArea;
 import javax.swing.JScrollPane;
-import java.io.*;
 
-// Heredamos de RegistroEmpleados para usar sus atributos y lógica
 public class ReporteEmpleados extends RegistroEmpleados {
 
-    public ReporteEmpleados(String nombreArchivo) {
-        super(nombreArchivo);
+    // El constructor hereda directamente de RegistroEmpleados
+    public ReporteEmpleados() {
+        super();
     }
 
-    // Opción 1: Imprimir Todo
+    // --------------------------------------------------------
+    // imprimirTodo()
+    // --------------------------------------------------------
+    // Muestra TODOS los empleados registrados, sin filtrar.
     public void imprimirTodo() {
-        leerYMostrar(false); // false = no filtrar por activos
+        mostrarReporte(false); // false = no filtrar, mostrar todos
     }
 
-    // Opción 2: Solo los activos
+    // --------------------------------------------------------
+    // imprimirActivos()
+    // --------------------------------------------------------
+    // Muestra ÚNICAMENTE los empleados cuyo campo activo = true.
     public void imprimirActivos() {
-        leerYMostrar(true); // true = filtrar solo activos
+        mostrarReporte(true); // true = solo los activos
     }
 
-    /**
-     * Función base para leer el archivo. 
-     * @param soloActivos Si es true, filtra las líneas que digan "Activo: true"
-     */
-    private void leerYMostrar(boolean soloActivos) {
-        File archivo = new File("empleados.txt"); // O usar la variable nombreArchivo si es accesible
-        StringBuilder reporte = new StringBuilder();
-        String titulo = soloActivos ? "--- Empleados Activos ---" : "--- Todos los Empleados ---";
-        
-        reporte.append(titulo).append("\n\n");
+    // --------------------------------------------------------
+    // mostrarReporte()
+    // --------------------------------------------------------
+    // Función base que construye el reporte.
+    // Recorre los arreglos y va armando un texto con los datos.
+    // Si soloActivos es true, omite a los que tienen activo = false.
+    //
+    // Usa JTextArea con scroll para que la lista se pueda desplazar
+    // si hay muchos empleados registrados.
+    private void mostrarReporte(boolean soloActivos) {
 
-        if (!archivo.exists()) {
-            JOptionPane.showMessageDialog(null, "No hay registros aún.");
+        // Verificamos si hay empleados registrados antes de intentar mostrar
+        if (Arreglos.total == 0) {
+            JOptionPane.showMessageDialog(null, "No hay empleados registrados aún.");
             return;
         }
 
-        try (BufferedReader br = new BufferedReader(new FileReader(archivo))) {
-            String linea;
-            boolean hayDatos = false;
+        // StringBuilder es más eficiente que String para concatenar en un bucle
+        StringBuilder reporte = new StringBuilder();
+        String titulo = soloActivos ? "--- Empleados Activos ---" : "--- Todos los Empleados ---";
+        reporte.append(titulo).append("\n\n");
 
-            while ((linea = br.readLine()) != null) {
-                if (soloActivos) {
-                    // Solo agregamos si la línea contiene "Activo: true"
-                    if (linea.contains("Activo: true")) {
-                        reporte.append(linea).append("\n");
-                        hayDatos = true;
-                    }
-                } else {
-                    // Agregamos todo
-                    reporte.append(linea).append("\n");
-                    hayDatos = true;
-                }
+        boolean hayDatos = false;
+
+        // Recorremos todos los empleados registrados
+        for (int i = 0; i < Arreglos.total; i++) {
+
+            // Si el filtro está activado, saltamos a los inactivos
+            if (soloActivos && !Arreglos.activos[i]) {
+                continue; // Pasamos al siguiente sin agregarlo al reporte
             }
 
-            if (!hayDatos) {
-                reporte.append("No se encontraron registros que coincidan.");
-            }
+            // Construimos la línea de información de este empleado
+            reporte.append("ID: ").append(Arreglos.ids[i])
+                   .append(" | Puesto: ").append(Arreglos.puestos[i])
+                   .append(" | Activo: ").append(Arreglos.activos[i])
+                   .append("\n");
 
-            // Mostrar en un área de texto con scroll por si la lista es larga
-            JTextArea textArea = new JTextArea(reporte.toString());
-            textArea.setEditable(false);
-            JScrollPane scrollPane = new JScrollPane(textArea);
-            scrollPane.setPreferredSize(new java.awt.Dimension(400, 300));
-            
-            JOptionPane.showMessageDialog(null, scrollPane, "Reporte de Empleados", JOptionPane.INFORMATION_MESSAGE);
-
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(null, "Error al leer el archivo: " + e.getMessage());
+            hayDatos = true;
         }
+
+        // Si después del recorrido no se agregó ningún empleado al reporte
+        if (!hayDatos) {
+            reporte.append("No se encontraron registros que coincidan.");
+        }
+
+        // Mostramos el reporte en una ventana con scroll
+        JTextArea textArea = new JTextArea(reporte.toString());
+        textArea.setEditable(false);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setPreferredSize(new java.awt.Dimension(400, 300));
+
+        JOptionPane.showMessageDialog(null, scrollPane,
+                "Reporte de Empleados", JOptionPane.INFORMATION_MESSAGE);
     }
 }
